@@ -9,6 +9,8 @@ import com.fittlens.core.repository.EquipmentRepository;
 import com.fittlens.core.repository.UserRepository;
 import com.fittlens.core.service.EquipmentService;
 import com.fittlens.core.service.ImageProcessingService;
+import com.fittlens.core.exception.ResourceNotFoundException;
+import com.fittlens.core.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +39,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public EquipmentResponse addEquipment(EquipmentRequest request, String userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         // Process and recognize equipment from image
         Equipment recognizedEquipment = imageProcessingService.recognizeEquipment(request.getUserEquipmentImage());
@@ -52,7 +54,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public EquipmentResponse createEquipment(CreateEquipmentRequest request, String userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Equipment equipment = new Equipment();
         equipment.setName(request.getName());
@@ -82,10 +84,10 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public void deleteEquipment(String equipmentId, String userId) {
         Equipment equipment = equipmentRepository.findById(equipmentId)
-            .orElseThrow(() -> new RuntimeException("Equipment not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + equipmentId));
 
         if (!equipment.getUser().getUuid().equals(userId)) {
-            throw new RuntimeException("Unauthorized to delete this equipment");
+            throw new UnauthorizedException("Unauthorized to delete this equipment");
         }
 
         equipmentRepository.delete(equipment);

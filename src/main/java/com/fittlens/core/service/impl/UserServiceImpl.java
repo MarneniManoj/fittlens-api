@@ -7,6 +7,7 @@ import com.fittlens.core.repository.UserRepository;
 import com.fittlens.core.service.UserService;
 import com.fittlens.core.util.AnimalNameGenerator;
 import com.fittlens.core.util.TokenGenerator;
+import com.fittlens.core.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +54,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserByUsername(String username) {
         User user = userRepository.findByName(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
         return convertToUserResponse(user);
     }
 

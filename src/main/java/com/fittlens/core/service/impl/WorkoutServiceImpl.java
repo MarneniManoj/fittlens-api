@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.fittlens.core.exception.ResourceNotFoundException;
 
 @Service
 public class WorkoutServiceImpl implements WorkoutService {
@@ -39,7 +40,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     public WorkoutResponse getWorkout(String userId, String workoutId) {
         WorkoutSession workout = workoutSessionRepository.findByUserUuidAndId(userId, workoutId);
         if (workout == null) {
-            throw new RuntimeException("Workout not found");
+            throw new ResourceNotFoundException("Workout not found with id: " + workoutId);
         }
         return convertToWorkoutResponse(workout);
     }

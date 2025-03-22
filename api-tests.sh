@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the API URL
-API_URL=http://54.89.45.153:8080
+API_URL=https://api.fittlens.com
 
 echo "\nUser Management APIs"
 echo "-------------------"

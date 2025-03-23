@@ -23,7 +23,7 @@ curl --location "${API_URL}/users/TestUser"
 echo "\nEquipment Management APIs"
 echo "------------------------"
 
-USER_ID=4949f5c0-3654-4aed-b0bd-1fc77f03fdb8
+USER_ID=5fdfe5d5-c771-4e47-8d72-ed06a075b1dc
 # Create equipment without image
 echo "\nCreating equipment without image..."
 curl --location "${API_URL}/equipments/create" \

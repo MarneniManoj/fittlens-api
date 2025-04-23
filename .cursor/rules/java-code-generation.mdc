@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can @ files here
+- Write code modular and easy to understand with comments
+- Follow SOLID and DRY software engineering principles
+- Write unit tests for the added code

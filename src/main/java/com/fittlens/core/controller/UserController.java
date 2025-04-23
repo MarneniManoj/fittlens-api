@@ -2,6 +2,8 @@ package com.fittlens.core.controller;
 
 import com.fittlens.core.dto.UserRegistrationRequest;
 import com.fittlens.core.dto.UserResponse;
+import com.fittlens.core.dto.LoginRequest;
+import com.fittlens.core.dto.LoginResponse;
 import com.fittlens.core.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,12 @@ public class UserController {
     @PostMapping("/signup")
     public ResponseEntity<UserResponse> registerUser(@RequestBody UserRegistrationRequest request) {
         UserResponse response = userService.registerUser(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+        LoginResponse response = userService.login(request);
         return ResponseEntity.ok(response);
     }
 

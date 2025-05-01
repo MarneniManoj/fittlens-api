@@ -10,10 +10,13 @@ public class EquipmentRecognitionResponse {
     @JsonProperty("equipment_name")
     private String equipmentName;
     
+    @JsonProperty("category")
     private String category;
-    
-    @JsonProperty("primary_muscles")
-    private List<String> primaryMuscles;
-    
+
+    @JsonProperty("description")
     private String description;
+
+    @JsonProperty("possible_exercises")
+    private List<PossibleExercise> possibleExercises;
 }
+

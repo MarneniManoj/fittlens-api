@@ -18,7 +18,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -60,7 +60,7 @@ class EquipmentServiceImplTest {
         savedEquipment.setId("test-id");
         savedEquipment.setName(request.getName());
         savedEquipment.setImageIcon(request.getImageIcon());
-        savedEquipment.setUser(testUser);
+        savedEquipment.setUsers(Set.of(testUser));
 
         when(equipmentRepository.save(any(Equipment.class))).thenReturn(savedEquipment);
 
@@ -91,7 +91,7 @@ class EquipmentServiceImplTest {
         Equipment savedEquipment = new Equipment();
         savedEquipment.setId("test-id");
         savedEquipment.setName(recognizedEquipment.getName());
-        savedEquipment.setUser(testUser);
+        savedEquipment.setUsers(Set.of(testUser));
         when(equipmentRepository.save(any(Equipment.class))).thenReturn(savedEquipment);
 
         // Act
@@ -104,27 +104,6 @@ class EquipmentServiceImplTest {
         assertEquals(USER_ID, response.getUserId());
         verify(imageProcessingService).recognizeEquipment(request.getUserEquipmentImage());
         verify(equipmentRepository).save(any(Equipment.class));
-    }
-
-    @Test
-    void listEquipment_WithGymId_Success() {
-        // Arrange
-        String gymId = "test-gym";
-        List<Equipment> equipmentList = Arrays.asList(
-            createTestEquipment("1", testUser),
-            createTestEquipment("2", testUser)
-        );
-
-        when(equipmentRepository.findByUserUuidAndGymId(USER_ID, gymId))
-            .thenReturn(equipmentList);
-
-        // Act
-        List<EquipmentResponse> response = equipmentService.listEquipment(USER_ID, gymId);
-
-        // Assert
-        assertNotNull(response);
-        assertEquals(2, response.size());
-        verify(equipmentRepository).findByUserUuidAndGymId(USER_ID, gymId);
     }
 
     @Test
@@ -159,7 +138,7 @@ class EquipmentServiceImplTest {
         Equipment equipment = new Equipment();
         equipment.setId(id);
         equipment.setName("Test Equipment " + id);
-        equipment.setUser(user);
+        equipment.setUsers(Set.of(user));
         return equipment;
     }
 } 

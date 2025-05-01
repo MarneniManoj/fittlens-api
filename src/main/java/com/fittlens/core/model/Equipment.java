@@ -15,13 +15,22 @@ public class Equipment {
     
     private String name;
     private String imageIcon;
+    private String description;
+    private String category;
+ 
     
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-    
+
     @Column(name = "gym_id")
     private String gymId;
+
+
+    @ManyToMany
+    @JoinTable(
+        name = "user_equipment",
+        joinColumns = @JoinColumn(name = "equipment_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> users;
     
     @ManyToMany
     @JoinTable(

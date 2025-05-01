@@ -42,7 +42,7 @@ public class OpenAIService {
                     .text("Please analyze this gym equipment image and provide a structured response with the following fields:\n" +
                           "- equipment_name: The name of the equipment\n" +
                           "- category: The category of equipment (e.g., cardio, strength, etc.)\n" +
-                          "- primary_muscles: List of primary muscles targeted\n" +
+                          "- possible_exercises: List of possible exercises that can be performed with the equipment, including name, description and primary muscles worked\n" +
                           "- description: A brief description of the equipment\n\n" +
                           "Format the response as a valid JSON object.")
                     .build());
@@ -60,7 +60,11 @@ public class OpenAIService {
                 .putAdditionalProperty("properties", JsonValue.from(Map.of(
                     "equipment_name", Map.of("type", "string"),
                     "category", Map.of("type", "string"),
-                    "primary_muscles", Map.of("type", "array", "items", Map.of("type", "string")),
+                    "possible_exercises", Map.of("type", "array", "items", Map.of("type", "object", "properties", Map.of(
+                        "name", Map.of("type", "string"),
+                        "description", Map.of("type", "string"),
+                        "primary_muscles", Map.of("type", "array", "items", Map.of("type", "string"))
+                    ))),
                     "description", Map.of("type", "string")
                 )))
                 .build();

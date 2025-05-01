@@ -3,9 +3,11 @@ package com.fittlens.core.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 @Data
 @Entity
@@ -27,6 +29,9 @@ public class User implements UserDetails {
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @ManyToMany(mappedBy = "users")
+    private Set<Equipment> equipments;
 
     @Override
     public Collection<? extends org.springframework.security.core.GrantedAuthority> getAuthorities() {

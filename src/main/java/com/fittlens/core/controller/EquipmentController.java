@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,11 +81,7 @@ public class EquipmentController {
 
     @PostMapping("/analyze")
     public ResponseEntity<EquipmentRecognitionResponse> analyzeEquipment(@RequestParam String imageUrl){
-        EquipmentRecognitionResponse equipmentRecognitionResponse = openAIService.recognizeEquipmentFromImageUrl(imageUrl);
-
-        EquipmentResponse response = equipmentService.createEquipment(CreateEquipmentRequest.builder()
-                        .name(equipmentRecognitionResponse.getEquipmentName())
-                .build(), "mn");
+        EquipmentRecognitionResponse equipmentRecognitionResponse = equipmentService.analyzeEquipment(imageUrl);
         return ResponseEntity.ok(equipmentRecognitionResponse);
     }
 } 

@@ -11,10 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RestController
 @RequestMapping("/equipments")
@@ -80,8 +77,12 @@ public class EquipmentController {
     }
 
     @PostMapping("/analyze")
-    public ResponseEntity<EquipmentRecognitionResponse> analyzeEquipment(@RequestParam String imageUrl){
-        EquipmentRecognitionResponse equipmentRecognitionResponse = equipmentService.analyzeEquipment(imageUrl);
-        return ResponseEntity.ok(equipmentRecognitionResponse);
+    public ResponseEntity<List<EquipmentRecognitionResponse>> analyzeEquipment(@RequestParam List<String> imageUrls){
+        List<EquipmentRecognitionResponse> res = new ArrayList<>();
+        for(String imageUrl : imageUrls){
+            EquipmentRecognitionResponse equipmentRecognitionResponse = equipmentService.analyzeEquipment(imageUrl);
+            res.add(equipmentRecognitionResponse);
+        }
+        return ResponseEntity.ok(res);
     }
 } 

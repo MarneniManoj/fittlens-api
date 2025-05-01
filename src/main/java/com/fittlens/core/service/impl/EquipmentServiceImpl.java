@@ -121,24 +121,30 @@ public class EquipmentServiceImpl implements EquipmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found "));
 
         // Create and save exercises first
-        Set<Exercise> savedExercises = er.getPossibleExercises().stream()
-                .map(exercise -> Exercise.builder()
-                        .name(exercise.getName())
-                        .instructions(exercise.getDescription())
-                        .targetMuscleGroups(new HashSet<>(exercise.getPrimaryMuscles()))
-                        .build())
-                .map(exerciseRepository::save)
-                .collect(Collectors.toSet());
+        Set<Exercise> exercises = new HashSet<>();
+        for (var exerciseDto : er.getPossibleExercises()) {
+            Exercise exercise = Exercise.builder()
+                    .name(exerciseDto.getName())
+                    .instructions(exerciseDto.getDescription())
+                    .targetMuscleGroups(new HashSet<>(exerciseDto.getPrimaryMuscles()))
+                    .build();
+            exercises.add(exerciseRepository.save(exercise));
+        }
 
+        // Create new equipment
         Equipment equipment = new Equipment();
+        equipment.setImageIcon(imageUrl);
         equipment.setName(er.getEquipmentName());
-        equipment.setUsers(Set.of(user));
         equipment.setGymId("1");
         equipment.setCategory(er.getCategory());
         equipment.setDescription(er.getDescription());
-        equipment.setPossibleExercises(savedExercises);
+        equipment.setPossibleExercises(exercises);
+        
+        // Use the helper method to manage the bidirectional relationship
+        equipment.addUser(user);
 
-        equipmentRepository.save(equipment);
+        // Save the equipment
+        Equipment savedEquipment = equipmentRepository.save(equipment);
 
         return er;
     }

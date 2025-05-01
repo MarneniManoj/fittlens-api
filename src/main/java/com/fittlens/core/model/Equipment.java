@@ -12,17 +12,18 @@ public class Equipment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    
+
     private String name;
+
     private String imageIcon;
-    private String description;
-    private String category;
- 
     
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    private String category;
 
     @Column(name = "gym_id")
     private String gymId;
-
 
     @ManyToMany
     @JoinTable(

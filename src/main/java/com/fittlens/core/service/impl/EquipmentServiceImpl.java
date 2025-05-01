@@ -7,8 +7,10 @@ import com.fittlens.core.dto.ai.EquipmentRecognitionResponse;
 import com.fittlens.core.exception.ResourceNotFoundException;
 import com.fittlens.core.exception.UnauthorizedException;
 import com.fittlens.core.model.Equipment;
+import com.fittlens.core.model.Exercise;
 import com.fittlens.core.model.User;
 import com.fittlens.core.repository.EquipmentRepository;
+import com.fittlens.core.repository.ExerciseRepository;
 import com.fittlens.core.repository.UserRepository;
 import com.fittlens.core.service.EquipmentService;
 import com.fittlens.core.service.ImageProcessingService;
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,15 +29,19 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     private final EquipmentRepository equipmentRepository;
     private final UserRepository userRepository;
+    private final ExerciseRepository exerciseRepository;
     private final ImageProcessingService imageProcessingService;
     private final OpenAIService openAIService;
+
     @Autowired
     public EquipmentServiceImpl(EquipmentRepository equipmentRepository,
-                              UserRepository userRepository,
-                              ImageProcessingService imageProcessingService,
-                              OpenAIService openAIService) {
+                                UserRepository userRepository,
+                                ExerciseRepository exerciseRepository,
+                                ImageProcessingService imageProcessingService,
+                                OpenAIService openAIService) {
         this.equipmentRepository = equipmentRepository;
         this.userRepository = userRepository;
+        this.exerciseRepository = exerciseRepository;
         this.imageProcessingService = imageProcessingService;
         this.openAIService = openAIService;
     }
@@ -43,7 +50,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public EquipmentResponse addEquipment(EquipmentRequest request, String userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         // Process and recognize equipment from image
         Equipment recognizedEquipment = imageProcessingService.recognizeEquipment(request.getUserEquipmentImage());
@@ -58,7 +65,7 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public EquipmentResponse createEquipment(CreateEquipmentRequest request, String userId) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Equipment equipment = new Equipment();
         equipment.setName(request.getName());
@@ -74,19 +81,19 @@ public class EquipmentServiceImpl implements EquipmentService {
     public List<EquipmentResponse> listEquipment(String userId, String gymId) {
         List<Equipment> equipment;
 
-            equipment = equipmentRepository.findByUserId(userId);
+        equipment = equipmentRepository.findByUserId(userId);
 
-        
+
         return equipment.stream()
-            .map(this::convertToEquipmentResponse)
-            .collect(Collectors.toList());
+                .map(this::convertToEquipmentResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public void deleteEquipment(String equipmentId, String userId) {
         Equipment equipment = equipmentRepository.findById(equipmentId)
-            .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + equipmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Equipment not found with id: " + equipmentId));
 
         if (!equipment.getUsers().stream().anyMatch(user -> user.getUuid().equals(userId))) {
             throw new UnauthorizedException("Unauthorized to delete this equipment");
@@ -106,7 +113,33 @@ public class EquipmentServiceImpl implements EquipmentService {
     }
 
     @Override
+    @Transactional
     public EquipmentRecognitionResponse analyzeEquipment(String imageUrl) {
-        return openAIService.recognizeEquipmentFromImageUrl(imageUrl);
+        EquipmentRecognitionResponse er = openAIService.recognizeEquipmentFromImageUrl(imageUrl);
+
+        User user = userRepository.findByName("mn")
+                .orElseThrow(() -> new ResourceNotFoundException("User not found "));
+
+        // Create and save exercises first
+        Set<Exercise> savedExercises = er.getPossibleExercises().stream()
+                .map(exercise -> Exercise.builder()
+                        .name(exercise.getName())
+                        .instructions(exercise.getDescription())
+                        .targetMuscleGroups(new HashSet<>(exercise.getPrimaryMuscles()))
+                        .build())
+                .map(exerciseRepository::save)
+                .collect(Collectors.toSet());
+
+        Equipment equipment = new Equipment();
+        equipment.setName(er.getEquipmentName());
+        equipment.setUsers(Set.of(user));
+        equipment.setGymId("1");
+        equipment.setCategory(er.getCategory());
+        equipment.setDescription(er.getDescription());
+        equipment.setPossibleExercises(savedExercises);
+
+        equipmentRepository.save(equipment);
+
+        return er;
     }
 } 

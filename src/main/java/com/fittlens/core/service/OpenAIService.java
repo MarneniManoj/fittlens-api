@@ -31,7 +31,10 @@ public class OpenAIService {
 
     @PostConstruct
     public void init() {
-        client = OpenAIOkHttpClient.fromEnv();
+        client = OpenAIOkHttpClient
+                    .builder()
+                    .apiKey(openaiApiKey)
+                    .build();
     }
 
     public EquipmentRecognitionResponse recognizeEquipmentFromImageUrl(String imageUrl) {

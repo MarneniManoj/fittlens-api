@@ -28,4 +28,4 @@ public class WorkoutSession {
     private LocalDateTime scheduledDate;
     private LocalDateTime completedDate;
     private boolean isCompleted;
-} 
+}

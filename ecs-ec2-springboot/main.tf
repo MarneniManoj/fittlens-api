@@ -183,7 +183,7 @@ resource "aws_ecs_cluster" "this" {
 
 resource "aws_instance" "ecs_instance" {
   ami                    = data.aws_ami.ecs_optimized_ami.id
-  instance_type          = "t3.micro" # free tier eligible
+  instance_type          = "t2.micro" # free tier eligible
   subnet_id              = aws_subnet.public.id
   associate_public_ip_address = true
   security_groups        = [aws_security_group.ecs_instance_sg.id]
@@ -207,61 +207,5 @@ data "aws_ami" "ecs_optimized_ami" {
   filter {
     name   = "name"
     values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
-  }
-}
-
-########################
-# ECS Task Definition
-########################
-
-resource "aws_ecs_task_definition" "this" {
-  family                   = "springboot-task"
-  requires_compatibilities = ["EC2"]
-  network_mode             = "bridge"
-  cpu                      = "256"
-  memory                   = "512"
-
-  container_definitions = jsonencode([
-    {
-      name      = "springboot-container"
-      image     = "public.ecr.aws/t6v7l3e1/fittlens-public:v0.0.2"
-      essential = true
-      portMappings = [
-        {
-          containerPort = 8080
-          hostPort      = 8080
-        }
-      ]
-environment = [
-      {
-        name  = "DB_URL"
-        value = var.db_url
-      },
-      {
-        name  = "DB_USERNAME"
-        value = var.db_username
-      },
-      {
-        name  = "DB_PASSWORD"
-        value = var.db_password
-      }
-    ]
-    }
-  ])
-}
-
-########################
-# ECS Service
-########################
-
-resource "aws_ecs_service" "this" {
-  name            = "springboot-service"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.this.arn
-  desired_count   = 1
-  launch_type     = "EC2"
-
-  deployment_controller {
-    type = "ECS"
   }
 }

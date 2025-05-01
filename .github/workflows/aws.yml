@@ -98,6 +98,8 @@ jobs:
           DB_URL=${{ secrets.DB_URL }}
           DB_USERNAME=${{ secrets.DB_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
+          OPENAI_API_KEY = ${{ secrets.OPENAI_API_KEY }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1

@@ -3,6 +3,7 @@ package com.fittlens.core.controller;
 import com.fittlens.core.dto.CreateEquipmentRequest;
 import com.fittlens.core.dto.EquipmentRequest;
 import com.fittlens.core.dto.EquipmentResponse;
+import com.fittlens.core.dto.ai.EquipmentRecognitionResponse;
 import com.fittlens.core.service.EquipmentService;
 import com.fittlens.core.service.OpenAIService;
 import com.fittlens.core.service.S3Service;
@@ -80,11 +81,12 @@ public class EquipmentController {
     }
 
     @PostMapping("/analyze")
-    public String analyzeEquipment(@RequestParam String imageUrl){
-        try {
-            return openAIService.recognizeEquipmentFromImageUrl(imageUrl);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public ResponseEntity<EquipmentRecognitionResponse> analyzeEquipment(@RequestParam String imageUrl){
+        EquipmentRecognitionResponse equipmentRecognitionResponse = openAIService.recognizeEquipmentFromImageUrl(imageUrl);
+
+        EquipmentResponse response = equipmentService.createEquipment(CreateEquipmentRequest.builder()
+                        .name(equipmentRecognitionResponse.getEquipmentName())
+                .build(), "mn");
+        return ResponseEntity.ok(equipmentRecognitionResponse);
     }
 } 

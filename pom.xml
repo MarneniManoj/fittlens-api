@@ -102,6 +102,11 @@
 			<version>2.31.30</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.openai</groupId>
+			<artifactId>openai-java</artifactId>
+			<version>1.5.1</version>
+		</dependency>
 
 		<!-- HTTP client (for OpenAI API) -->
 		<dependency>

@@ -10,4 +10,4 @@ public class ExerciseResponse {
     private String instructions;
     private Set<String> targetMuscleGroups;
     private Set<EquipmentResponse> requiredEquipment;
-} 
+}

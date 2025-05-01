@@ -1,12 +1,22 @@
 package com.fittlens.core.service;
 
-import okhttp3.*;
+import com.fittlens.core.dto.EquipmentResponse;
+import com.fittlens.core.dto.ai.EquipmentRecognitionResponse;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.ChatModel;
+import com.openai.models.chat.completions.ChatCompletionContentPart;
+import com.openai.models.chat.completions.ChatCompletionContentPartImage;
+import com.openai.models.chat.completions.ChatCompletionContentPartText;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import com.openai.models.ResponseFormatJsonSchema;
+import com.openai.models.ResponseFormatJsonSchema.JsonSchema;
+import com.openai.core.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,48 +26,71 @@ public class OpenAIService {
     @Value("${openai.api.key}")
     private String openaiApiKey;
 
-    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    private OpenAIClient client;
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    public String recognizeEquipmentFromImageUrl(String imageUrl) throws IOException {
-        OkHttpClient client = new OkHttpClient();
-        ObjectMapper mapper = new ObjectMapper();
+    @PostConstruct
+    public void init() {
+        client = OpenAIOkHttpClient.fromEnv();
+    }
 
-        Map<String, Object> imageContent = new HashMap<>();
-        imageContent.put("type", "image_url");
-        imageContent.put("image_url", Map.of("url", imageUrl));
+    public EquipmentRecognitionResponse recognizeEquipmentFromImageUrl(String imageUrl) {
+        try {
+            // Create content parts for the message
+            ChatCompletionContentPart textPart = ChatCompletionContentPart.ofText(
+                ChatCompletionContentPartText.builder()
+                    .text("Please analyze this gym equipment image and provide a structured response with the following fields:\n" +
+                          "- equipment_name: The name of the equipment\n" +
+                          "- category: The category of equipment (e.g., cardio, strength, etc.)\n" +
+                          "- primary_muscles: List of primary muscles targeted\n" +
+                          "- description: A brief description of the equipment\n\n" +
+                          "Format the response as a valid JSON object.")
+                    .build());
 
-        Map<String, Object> textContent = new HashMap<>();
-        textContent.put("type", "text");
-        textContent.put("text",
-                "Identify the fitness equipment shown in the image. " +
-                        "Give a JSON with `name`, `category`, and `target_muscles` (as a list). Be concise."
-        );
+            ChatCompletionContentPart imagePart = ChatCompletionContentPart.ofImageUrl(
+                ChatCompletionContentPartImage.builder()
+                    .imageUrl(ChatCompletionContentPartImage.ImageUrl.builder()
+                        .url(imageUrl)
+                        .build())
+                    .build());
 
-        Map<String, Object> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("content", List.of(textContent, imageContent));
-
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("model", "gpt-4-vision-preview");
-        payload.put("messages", List.of(message));
-        payload.put("max_tokens", 500);
-
-        String requestBodyJson = mapper.writeValueAsString(payload);
-
-        Request request = new Request.Builder()
-                .url(OPENAI_API_URL)
-                .header("Authorization", "Bearer " + openaiApiKey)
-                .header("Content-Type", "application/json")
-                .post(RequestBody.create(
-                        requestBodyJson,
-                        MediaType.parse("application/json")))
+            // Define JSON schema for structured output
+            JsonSchema.Schema schema = JsonSchema.Schema.builder()
+                .putAdditionalProperty("type", JsonValue.from("object"))
+                .putAdditionalProperty("properties", JsonValue.from(Map.of(
+                    "equipment_name", Map.of("type", "string"),
+                    "category", Map.of("type", "string"),
+                    "primary_muscles", Map.of("type", "array", "items", Map.of("type", "string")),
+                    "description", Map.of("type", "string")
+                )))
                 .build();
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Unexpected code " + response);
-            }
-            return response.body().string();
+            // Create the chat completion request
+            ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+                .model(ChatModel.GPT_4_1)
+                .maxCompletionTokens(1000)
+                .responseFormat(ResponseFormatJsonSchema.builder()
+                    .jsonSchema(JsonSchema.builder()
+                        .name("equipment-analysis")
+                        .schema(schema)
+                        .build())
+                    .build())
+                .addUserMessageOfArrayOfContentParts(List.of(textPart, imagePart))
+                .build();
+
+            // Make the API call
+            String jsonResponse = client.chat().completions().create(params)
+                .choices().get(0)
+                .message().content()
+                .orElseThrow(() -> new RuntimeException("No response content received"));
+            System.out.println(
+                    jsonResponse
+            );
+            // Parse the JSON response into EquipmentResponse object
+            return mapper.readValue(jsonResponse, EquipmentRecognitionResponse.class);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to analyze equipment image", e);
         }
     }
 }

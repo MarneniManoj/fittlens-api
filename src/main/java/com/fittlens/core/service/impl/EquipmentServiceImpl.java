@@ -16,6 +16,8 @@ import com.fittlens.core.service.EquipmentService;
 import com.fittlens.core.service.ImageProcessingService;
 import com.fittlens.core.service.OpenAIService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -115,10 +117,11 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public EquipmentRecognitionResponse analyzeEquipment(String imageUrl) {
-        EquipmentRecognitionResponse er = openAIService.recognizeEquipmentFromImageUrl(imageUrl);
 
-        User user = userRepository.findByName("mn")
+        User user = userRepository.findByEmail(getCurrentUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found "));
+
+        EquipmentRecognitionResponse er = openAIService.recognizeEquipmentFromImageUrl(imageUrl);
 
         // Create and save exercises first
         Set<Exercise> exercises = new HashSet<>();
@@ -148,4 +151,14 @@ public class EquipmentServiceImpl implements EquipmentService {
 
         return er;
     }
-} 
+
+    public String getCurrentUsername() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
+        } else {
+            return principal.toString();
+        }
+    }
+}
